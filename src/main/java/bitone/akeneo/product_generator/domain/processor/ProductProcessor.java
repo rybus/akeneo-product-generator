@@ -3,12 +3,14 @@ package bitone.akeneo.product_generator.domain.processor;
 import bitone.akeneo.product_generator.domain.RandomlyPicker;
 import bitone.akeneo.product_generator.domain.exception.NoChildrenCategoryDefinedException;
 import bitone.akeneo.product_generator.domain.exception.NoFamilyDefinedException;
+import bitone.akeneo.product_generator.domain.exception.RepositoryException;
 import bitone.akeneo.product_generator.domain.generator.product_value.ValueGenerator;
 import bitone.akeneo.product_generator.domain.generator.product_value.ValueGeneratorRegistry;
 import bitone.akeneo.product_generator.domain.model.Attribute;
 import bitone.akeneo.product_generator.domain.model.AttributeTypes;
 import bitone.akeneo.product_generator.domain.model.Category;
 import bitone.akeneo.product_generator.domain.model.CategoryRepository;
+import bitone.akeneo.product_generator.domain.model.AttributeRepository;
 import bitone.akeneo.product_generator.domain.model.Channel;
 import bitone.akeneo.product_generator.domain.model.ChannelRepository;
 import bitone.akeneo.product_generator.domain.model.CurrencyRepository;
@@ -17,9 +19,13 @@ import bitone.akeneo.product_generator.domain.model.FamilyRepository;
 import bitone.akeneo.product_generator.domain.model.Locale;
 import bitone.akeneo.product_generator.domain.model.LocaleRepository;
 import bitone.akeneo.product_generator.domain.model.Product;
+import bitone.akeneo.product_generator.domain.model.Record;
 import bitone.akeneo.product_generator.domain.model.ProductValue;
+import bitone.akeneo.product_generator.domain.model.ProductReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.io.IOException;
 
 public class ProductProcessor
 {
@@ -31,9 +37,7 @@ public class ProductProcessor
     private AttributeRepository attributeRepository;
     private ProductReader productReader;
 
-    private int skuIndex = 0;
-    private int familyIndex = 1;
-    private int categoryIndex = 2;
+    private int productIdIndex = 0;
 
     public ProductProcessor (
         ChannelRepository channelRepository,
@@ -55,14 +59,16 @@ public class ProductProcessor
 
     public Product getNext() throws
         NoFamilyDefinedException,
-        NoChildrenCategoryDefinedException {
+        NoChildrenCategoryDefinedException,
+        IOException,
+        RepositoryException {
 
-        HashMap<String, RawValue> product = this.productReader.readProduct();
+        HashMap<String, Record> product = this.productReader.readLine();
 
-        String sku = product.get('sku');
+        String sku = product.get("sku").getValue();
         int id = generateUniqueId();
-        Family family = getFamily( product.get('family'));
-        Category[] categories = getCategories(product.get('categories').split(','));
+        Family family = getFamily(product.get("family").getValue());
+        Category[] categories = getCategories(product.get("categories").getValue().split(";"));
         ProductValue[] values = getValues(product);
 
         return new Product(id, sku, true, family, values, categories);
@@ -79,9 +85,9 @@ public class ProductProcessor
             throw new NoFamilyDefinedException("At least one family should exist.");
         }
 
-        family  = familyRepository.get(familyCode)
-        if (null = family) {
-            throw new NoFamilyDefinedException("Family with code " + familyCode + ' does not exist.');
+        family  = familyRepository.get(familyCode);
+        if (null == family) {
+            throw new NoFamilyDefinedException("Family with code " + familyCode + " does not exist.");
         } else {
             return family;
         }
@@ -89,14 +95,14 @@ public class ProductProcessor
 
     private Category[] getCategories(String[] categoryCodes) throws NoChildrenCategoryDefinedException {
 
-        Category[] categories = new HashSet<Category>();
+        HashSet<Category> categories = new HashSet<Category>();
 
         if (categoryRepository.countChildren() == 0) {
             throw new NoChildrenCategoryDefinedException("At least one children category should exist");
         }
 
-        for (String categoryCodes : categoryCode) {
-            Category category = categortyRepository.get(categoryCode);
+        for (String categoryCode : categoryCodes) {
+            Category category = categoryRepository.get(categoryCode);
 
             categories.add(category);
         }
@@ -104,20 +110,15 @@ public class ProductProcessor
         return (Category[]) categories.toArray(new Category[categories.size()]);
     }
 
-    private ProductValue[] getValues(HashMap<String, RawValue> product)
+    private ProductValue[] getValues(HashMap<String, Record> product)
     {
-        RawValues[] rawValues = (RawValues[]) product.values().toArray(new RawLine[product.size()]);
+        Record[] Records = (Record[]) product.values().toArray(new Record[product.size()]);
         ArrayList<ProductValue> values = new ArrayList<ProductValue>();
 
-        for (RawValues rawValue : rawValues) {
-            attribute = attributeRepository.get(rawValue.getAttribute())
-            if (attribute.getType().equals(AttributeTypes.IDENTIFIER)) {
-                ProductValue identifierValue = new ProductValue(attribute, rawValue, null, null);
-                values.add(identifierValue);
-            } else {
-              ProductValue value = new ProductValue(attribute, identifier, null, null);
-               values.add(value);
-            }
+        for (Record Record : Records) {
+          Attribute attribute = attributeRepository.get(Record.getAttribute());
+          ProductValue value = new ProductValue(attribute, Record.getValue(), null, null);
+          values.add(value);
         }
 
         return (ProductValue[]) values.toArray(new ProductValue[values.size()]);
@@ -127,9 +128,5 @@ public class ProductProcessor
         productIdIndex++;
 
         return productIdIndex;
-    }
-
-    public void reset() {
-        productIdentifierIndex = 0;
     }
 }

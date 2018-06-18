@@ -6,6 +6,7 @@ import bitone.akeneo.product_generator.domain.model.ProductReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import java.util.HashMap;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -16,49 +17,36 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
-import bitone.akeneo.product_generator.domain.model.RawValue;
+import bitone.akeneo.product_generator.domain.model.Record;
 
 public class CsvProductReader implements ProductReader {
     private String csvFile;
-    private String[] headers;
+    private CSVRecord headers;
 
     CSVParser csvParser = null;
     String line = "";
     String separator = ";";
 
-    public void initialize(String csvFile) throws RepositoryException {
-        String line = "";
-        try {
-            Reader reader = Files.newBufferedReader(Paths.get(this.csvFile));
-            csvParser = new CSVParser(reader, CSVFormat.DEFAULT);
-            if ((line = this.buffer.readLine()) != null) {
-                headers = line.split(this.separator);
-            }
-        } catch (IOException e) {
-            throw new RepositoryException(e);
-        }
+    public void initialize(String csvFile) throws IOException {
+        Reader reader = Files.newBufferedReader(Paths.get(this.csvFile));
+        csvParser = new CSVParser(reader, CSVFormat.DEFAULT);
     }
 
-    public void close() throws RepositoryException {
-        this.buffer.close();
-    }
-
-    public HashMap<String, RawValue> readLine() throws RepositoryException {
-      try {
-          if ((line = this.buffer.readLine()) != null) {
-              return mapLineWithHeader(line.split(this.separator));
+    public HashMap<String, Record> readLine() throws IOException {
+       for (CSVRecord csvRecord : csvParser) {
+          if (null == headers) {
+              headers = csvRecord;
           }
-          return null;
-        } catch (IOException e) {
-            throw new RepositoryException(e);
-        }
+          return mapLineWithHeader(csvRecord);
+      }
+      return null;
     }
 
-    publi HashMap<String, RawValue> mapLineWithHeader(String[] rawLine)
+    public HashMap<String, Record> mapLineWithHeader(CSVRecord record)
     {
-      HashMap<String, RawValues> values = new HashMap<String, RawValue>();
-      for (int i = 0; i < headers.length. i++) {
-        values.put(headers[i], new RawValue(headers[i], rawLine[i]));
+      HashMap<String, Record> values = new HashMap<String, Record>();
+      for (int i = 0; i < headers.size(); i++) {
+        values.put(headers.get(i), new Record(headers.get(i), record.get(i)));
       }
 
       return values;

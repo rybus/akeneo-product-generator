@@ -9,7 +9,8 @@ import bitone.akeneo.product_generator.domain.model.CurrencyRepository;
 import bitone.akeneo.product_generator.domain.model.FamilyRepository;
 import bitone.akeneo.product_generator.domain.model.LocaleRepository;
 import bitone.akeneo.product_generator.domain.model.ProductRepository;
-import bitone.akeneo.product_generator.domain.reader.ProductReader;
+import bitone.akeneo.product_generator.domain.model.ProductReader;
+import bitone.akeneo.product_generator.domain.processor.ProductProcessor;
 import bitone.akeneo.product_generator.domain.exception.NoFamilyDefinedException;
 import bitone.akeneo.product_generator.domain.exception.NoChildrenCategoryDefinedException;
 import bitone.akeneo.product_generator.domain.exception.RepositoryException;
@@ -21,9 +22,11 @@ import bitone.akeneo.product_generator.infrastructure.database.DbCurrencyReposit
 import bitone.akeneo.product_generator.infrastructure.database.DbFamilyRepository;
 import bitone.akeneo.product_generator.infrastructure.database.DbLocaleRepository;
 import bitone.akeneo.product_generator.infrastructure.file.FileProductRepository;
-import bitone.akeneo.product_generator.application.GenerateProductHandler;
-import bitone.akeneo.product_generator.application.GenerateProduct;
+import bitone.akeneo.product_generator.application.ProcessProductHandler;
+import bitone.akeneo.product_generator.application.ProcessProduct;
+import bitone.akeneo.product_generator.infrastructure.file.CsvProductReader;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
@@ -39,9 +42,9 @@ public class ReadProductCommand {
         String productIndex,
         String productAndProductModelIndex
     )
-        throws UnsupportedEncodingException, SQLException, NoFamilyDefinedException, NoChildrenCategoryDefinedException, SecurityException, RepositoryException {
+        throws IOException, UnsupportedEncodingException, SQLException, NoFamilyDefinedException, NoChildrenCategoryDefinedException, SecurityException, RepositoryException {
 
-        GenerateProductHandler handler;
+        ProcessProductHandler handler;
         ProductProcessor processor;
         ProductRepository repository;
 
@@ -50,18 +53,17 @@ public class ReadProductCommand {
         repository.open();
 
         processor = getProcessor(databaseUrl, csvProduct);
-        handler = new ReadProductHandler(processor, repository);
+        handler = new ProcessProductHandler(processor, repository);
 
         for (int count = 0; count < productCount; count++) {
-            ReadProduct command = new ReadProduct();
+            ProcessProduct command = new ProcessProduct();
             handler.handle(command);
         }
 
         repository.close();
-        reader.close();
     }
 
-    private ProductProcessor getProcessor(String databaseUrl, String csvProduct) throws SQLException {
+    private ProductProcessor getProcessor(String databaseUrl, String csvProduct) throws SQLException, RepositoryException, IOException {
         LocaleRepository localeRepository = buildLocaleRepository(databaseUrl);
         CurrencyRepository currencyRepository = buildCurrencyRepository(databaseUrl);
         CategoryRepository categoryRepository = buildCategoryRepository(databaseUrl);
@@ -81,8 +83,8 @@ public class ReadProductCommand {
         );
     }
 
-    private ProductReader buildProductReader(String csvProduct) {
-      FileProductReader productReader = new FileProductReader();
+    private ProductReader buildProductReader(String csvProduct) throws RepositoryException, IOException {
+      CsvProductReader productReader = new CsvProductReader();
       productReader.initialize(csvProduct);
 
       return productReader;

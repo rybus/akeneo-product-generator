@@ -6,19 +6,22 @@ import bitone.akeneo.product_generator.domain.model.Product;
 import bitone.akeneo.product_generator.domain.exception.NoFamilyDefinedException;
 import bitone.akeneo.product_generator.domain.exception.NoChildrenCategoryDefinedException;
 import bitone.akeneo.product_generator.domain.exception.RepositoryException;
+import bitone.akeneo.product_generator.domain.processor.ProductProcessor;
+import java.io.IOException;
 
 public class ProcessProductHandler {
     private ProductProcessor processor;
     private ProductRepository repository;
 
-    public ProcessProductHamdler(ProductProcessor processor, ProductRepository repository) {
+    public ProcessProductHandler(ProductProcessor processor, ProductRepository repository) {
         this.processor = processor;
         this.repository = repository;
     }
 
-    public void handle(GenerateProduct command) throws
+    public void handle(ProcessProduct command) throws
         NoFamilyDefinedException,
         NoChildrenCategoryDefinedException,
+        IOException,
         RepositoryException
     {
         Product product = processor.getNext();

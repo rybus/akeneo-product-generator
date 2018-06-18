@@ -1,10 +1,10 @@
 package bitone.akeneo.product_generator.domain.model;
 
-public class RawValue {
+public class Record {
     private String attribute;
     private String value;
 
-    public RawValue(String attribute, String value) {
+    public Record(String attribute, String value) {
         this.attribute = attribute;
         this.value = value;
     }

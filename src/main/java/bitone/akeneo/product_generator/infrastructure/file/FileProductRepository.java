@@ -27,7 +27,6 @@ public class FileProductRepository implements ProductRepository {
     private static final int esBatchSize = 90*1024*1024;
 
     private String outDir;
-    private String csvFile;
     private String productIndex;
     private String productAndProductModelIndex;
 
@@ -44,7 +43,6 @@ public class FileProductRepository implements ProductRepository {
 
     public FileProductRepository(
         String outDir,
-        String csvFile,
         String productIndex,
         String productAndProductModelIndex
     ) {

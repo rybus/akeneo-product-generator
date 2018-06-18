@@ -1,12 +1,12 @@
 package bitone.akeneo.product_generator.domain.model;
 
 import bitone.akeneo.product_generator.domain.exception.RepositoryException;
+import java.util.HashMap;
+import java.io.IOException;
 
-public interface ProductRepository {
+public interface ProductReader {
 
-    public void initialize(String csvFile) throws RepositoryException {
+    public void initialize(String csvFile) throws IOException;
 
-    public Product readProduct() throws RepositoryException;
-
-    public void close() throws RepositoryException;
+    public HashMap<String, Record> readLine() throws IOException;
 }

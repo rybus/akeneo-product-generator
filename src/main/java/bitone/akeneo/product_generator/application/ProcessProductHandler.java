@@ -24,8 +24,10 @@ public class ProcessProductHandler {
         IOException,
         RepositoryException
     {
-        Product product = processor.getNext();
 
-        repository.add(product);
+        Product product;
+        while ((product = processor.getNext()) != null) {
+            repository.add(product);
+        }
     }
 }

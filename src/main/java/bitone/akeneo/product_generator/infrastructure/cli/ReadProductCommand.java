@@ -38,7 +38,6 @@ public class ReadProductCommand {
         String databaseUrl,
         String outputDirectory,
         String csvProduct,
-        int productCount,
         String productIndex,
         String productAndProductModelIndex
     )
@@ -55,10 +54,8 @@ public class ReadProductCommand {
         processor = getProcessor(databaseUrl, csvProduct);
         handler = new ProcessProductHandler(processor, repository);
 
-        for (int count = 0; count < productCount; count++) {
-            ProcessProduct command = new ProcessProduct();
-            handler.handle(command);
-        }
+        ProcessProduct command = new ProcessProduct();
+        handler.handle(command);
 
         repository.close();
     }

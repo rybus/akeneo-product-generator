@@ -21,7 +21,7 @@ dependencies {
 }
 
 shadowJar {
-    baseName = 'akeneo-product-generator-full'
+    baseName = 'akeneo-product-import-full'
     classifier = null
     version =  '0.3.1'
     configurations = [project.configurations.compile]
@@ -30,7 +30,7 @@ shadowJar {
 jar {
     baseName = 'akeneo-product-generator'
     manifest {
-        attributes 'Main-Class': 'bitone.akeneo.product_generator.ProductGeneratorApplication'
+        attributes 'Main-Class': 'bitone.akeneo.product_generator.CsvProductImportApplication'
     }
 }
 

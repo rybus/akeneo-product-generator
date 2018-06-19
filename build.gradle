@@ -28,7 +28,7 @@ shadowJar {
 }
 
 jar {
-    baseName = 'akeneo-product-generator'
+    baseName = 'akeneo-product-import'
     manifest {
         attributes 'Main-Class': 'bitone.akeneo.product_generator.CsvProductImportApplication'
     }
@@ -36,4 +36,4 @@ jar {
 
 apply plugin: 'application'
 
-mainClassName = 'bitone.akeneo.data_generator.ProductGeneratorApplication'
+mainClassName = 'bitone.akeneo.data_generator.CsvProductImportApplication'

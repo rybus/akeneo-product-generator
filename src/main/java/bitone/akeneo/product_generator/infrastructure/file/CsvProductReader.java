@@ -7,6 +7,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -20,25 +21,31 @@ import java.util.ArrayList;
 import bitone.akeneo.product_generator.domain.model.Record;
 
 public class CsvProductReader implements ProductReader {
-    private String csvFile;
     private CSVRecord headers;
+    private CSVRecord current;
 
-    CSVParser csvParser = null;
-    String line = "";
-    String separator = ";";
+    Iterator<CSVRecord> csvRecords = null;
 
     public void initialize(String csvFile) throws IOException {
-        Reader reader = Files.newBufferedReader(Paths.get(this.csvFile));
-        csvParser = new CSVParser(reader, CSVFormat.DEFAULT);
+        Reader reader = Files.newBufferedReader(Paths.get(csvFile));
+        csvRecords = new CSVParser(reader, CSVFormat.DEFAULT.withDelimiter(';')).iterator();
     }
 
     public HashMap<String, Record> readLine() throws IOException {
-       for (CSVRecord csvRecord : csvParser) {
-          if (null == headers) {
-              headers = csvRecord;
-          }
-          return mapLineWithHeader(csvRecord);
+      CSVRecord record;
+
+      if (csvRecords.hasNext()) {
+        record = csvRecords.next();
+
+        if (null == headers) {
+            headers = record;
+
+            return readLine();
+        }
+
+        return mapLineWithHeader(record);
       }
+
       return null;
     }
 

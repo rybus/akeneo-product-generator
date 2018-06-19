@@ -4,6 +4,8 @@ import bitone.akeneo.product_generator.domain.RandomlyPicker;
 import bitone.akeneo.product_generator.domain.exception.NoChildrenCategoryDefinedException;
 import bitone.akeneo.product_generator.domain.exception.NoFamilyDefinedException;
 import bitone.akeneo.product_generator.domain.exception.RepositoryException;
+import bitone.akeneo.product_generator.domain.exception.AttributeNotFoundException;
+import bitone.akeneo.product_generator.domain.exception.FamilyNotFoundException;
 import bitone.akeneo.product_generator.domain.generator.product_value.ValueGenerator;
 import bitone.akeneo.product_generator.domain.generator.product_value.ValueGeneratorRegistry;
 import bitone.akeneo.product_generator.domain.model.Attribute;
@@ -61,23 +63,28 @@ public class ProductProcessor
         NoFamilyDefinedException,
         NoChildrenCategoryDefinedException,
         IOException,
+        AttributeNotFoundException,
+        FamilyNotFoundException,
         RepositoryException {
 
         HashMap<String, Record> product = this.productReader.readLine();
 
+        if (null == product) {
+            return null;
+        }
         String sku = product.get("sku").getValue();
         int id = generateUniqueId();
         Family family = getFamily(product.get("family").getValue());
-        Category[] categories = getCategories(product.get("categories").getValue().split(";"));
+        Category[] categories = getCategories(product.get("categories").getValue().split(","));
         ProductValue[] values = getValues(product);
 
         return new Product(id, sku, true, family, values, categories);
     }
 
-    private Family getFamily(String familyCode) throws NoFamilyDefinedException {
+    private Family getFamily(String familyCode) throws NoFamilyDefinedException, FamilyNotFoundException {
         Family family;
 
-        if(familyCode != null && !familyCode.isEmpty()) {
+        if(familyCode == null || familyCode.isEmpty()) {
             throw new NoFamilyDefinedException("No family provided.");
         }
 
@@ -87,7 +94,7 @@ public class ProductProcessor
 
         family  = familyRepository.get(familyCode);
         if (null == family) {
-            throw new NoFamilyDefinedException("Family with code " + familyCode + " does not exist.");
+            throw new FamilyNotFoundException(familyCode);
         } else {
             return family;
         }
@@ -103,20 +110,28 @@ public class ProductProcessor
 
         for (String categoryCode : categoryCodes) {
             Category category = categoryRepository.get(categoryCode);
-
+            if (null == category) {
+                throw new NoChildrenCategoryDefinedException("Category not found " + categoryCode);
+            }
             categories.add(category);
         }
 
         return (Category[]) categories.toArray(new Category[categories.size()]);
     }
 
-    private ProductValue[] getValues(HashMap<String, Record> product)
+    private ProductValue[] getValues(HashMap<String, Record> product) throws AttributeNotFoundException
     {
         Record[] Records = (Record[]) product.values().toArray(new Record[product.size()]);
         ArrayList<ProductValue> values = new ArrayList<ProductValue>();
 
         for (Record Record : Records) {
+          if (Record.getAttribute().equals("categories") || Record.getAttribute().equals("family")) {
+              continue;
+          }
           Attribute attribute = attributeRepository.get(Record.getAttribute());
+          if (null == attribute) {
+              throw new AttributeNotFoundException(Record.getAttribute());
+          }
           ProductValue value = new ProductValue(attribute, Record.getValue(), null, null);
           values.add(value);
         }

@@ -4,6 +4,8 @@ import bitone.akeneo.product_generator.infrastructure.cli.ReadProductCommand;
 import bitone.akeneo.product_generator.domain.exception.NoFamilyDefinedException;
 import bitone.akeneo.product_generator.domain.exception.NoChildrenCategoryDefinedException;
 import bitone.akeneo.product_generator.domain.exception.RepositoryException;
+import bitone.akeneo.product_generator.domain.exception.FamilyNotFoundException;
+import bitone.akeneo.product_generator.domain.exception.AttributeNotFoundException;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.io.IOException;
@@ -28,6 +30,8 @@ public class CsvProductImportApplication {
         NoFamilyDefinedException,
         NoChildrenCategoryDefinedException,
         IOException,
+        AttributeNotFoundException,
+        FamilyNotFoundException,
         RepositoryException {
 
         ReadProductCommand readProduct = new ReadProductCommand();
@@ -61,15 +65,6 @@ public class CsvProductImportApplication {
         );
 
         options.addOption(
-            Option.builder("c")
-                .desc("Number of products to generate. Required.")
-                .hasArg()
-                .argName("PRODUCTS-COUNT")
-                .required()
-                .build()
-        );
-
-        options.addOption(
             Option.builder("p")
                 .desc("Elasticsearch Product Index name. Defaults to '" + defaultProductIndex + "'.")
                 .hasArg()
@@ -92,19 +87,18 @@ public class CsvProductImportApplication {
             System.err.println(e.getMessage());
             System.err.println();
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp( "<akeneo-product-generator-full-jar-file>", options );
+            formatter.printHelp( "<akeneo-product-import-full-jar-file>", options );
             System.exit(1);
         }
 
         String databaseUrl = cmd.getOptionValue("u");
         String outputDirectory = cmd.getOptionValue("o");
-        int productCount = Integer.valueOf(cmd.getOptionValue("c"));
         String csvFile = cmd.getOptionValue("f");
 
         String productIndex = cmd.getOptionValue("p", defaultProductIndex);
         String productAndProductModelIndex = cmd.getOptionValue("m", defaultProductAndProductModelIndex);
 
-        System.out.format("Generating %d products in %s directory...", productCount, outputDirectory);
+        System.out.format("Importing products from %s...", csvFile);
 
         readProduct.execute(
             databaseUrl,

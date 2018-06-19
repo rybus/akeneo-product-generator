@@ -12,6 +12,8 @@ import bitone.akeneo.product_generator.domain.model.ProductRepository;
 import bitone.akeneo.product_generator.domain.model.ProductReader;
 import bitone.akeneo.product_generator.domain.processor.ProductProcessor;
 import bitone.akeneo.product_generator.domain.exception.NoFamilyDefinedException;
+import bitone.akeneo.product_generator.domain.exception.AttributeNotFoundException;
+import bitone.akeneo.product_generator.domain.exception.FamilyNotFoundException;
 import bitone.akeneo.product_generator.domain.exception.NoChildrenCategoryDefinedException;
 import bitone.akeneo.product_generator.domain.exception.RepositoryException;
 import bitone.akeneo.product_generator.infrastructure.database.DbAttributeGroupRepository;
@@ -41,7 +43,7 @@ public class ReadProductCommand {
         String productIndex,
         String productAndProductModelIndex
     )
-        throws IOException, UnsupportedEncodingException, SQLException, NoFamilyDefinedException, NoChildrenCategoryDefinedException, SecurityException, RepositoryException {
+        throws IOException, UnsupportedEncodingException, FamilyNotFoundException, AttributeNotFoundException, SQLException, NoFamilyDefinedException, NoChildrenCategoryDefinedException, SecurityException, RepositoryException {
 
         ProcessProductHandler handler;
         ProductProcessor processor;
@@ -60,7 +62,7 @@ public class ReadProductCommand {
         repository.close();
     }
 
-    private ProductProcessor getProcessor(String databaseUrl, String csvProduct) throws SQLException, RepositoryException, IOException {
+    private ProductProcessor getProcessor(String databaseUrl, String csvProduct) throws SQLException, RepositoryException, AttributeNotFoundException, IOException {
         LocaleRepository localeRepository = buildLocaleRepository(databaseUrl);
         CurrencyRepository currencyRepository = buildCurrencyRepository(databaseUrl);
         CategoryRepository categoryRepository = buildCategoryRepository(databaseUrl);
